@@ -36,19 +36,16 @@ def calculate_max_dist(knots, coeffs, n, data):
 
 
 def generate_knot_counts(num_data_pts, degree, ratios):
-    """    if len(ratios) == 1:
-        counts = [int(ratios[0]*num_data_pts)]
-    else:"""
-    counts = [int(ratio * num_data_pts) for ratio in ratios]
-    for i in range(len(counts)):
-        if counts[i] < degree + 1:
-            counts[i] = degree + 1
+    num_end_knots_total = 2 * (degree + 1)
+    counts = [max(int(ratio * num_data_pts), num_end_knots_total) for ratio in ratios]
     return counts
 
 
-def flatten(l):
-    return [item for sublist in l for item in sublist]
+def generate_knot_vector(degree, num_knots):
+    num_end_knots_each = degree + 1  # number of end knots (for each end)
+    assert num_knots >= 2 * num_end_knots_each
+    num_internal_knots = num_knots - 2 * num_end_knots_each
+    internal_knots = [((x + 1) / (num_internal_knots + 1)) for x in range(num_internal_knots)]
+    knot_vector = num_end_knots_each * [0] + internal_knots + num_end_knots_each * [1]
 
-
-def generate_knot_vector(n, p):
-    return flatten((n + 1) * [[0]] + [[x / p] for x in range(1, p)] + (n + 1) * [[1]])
+    return knot_vector

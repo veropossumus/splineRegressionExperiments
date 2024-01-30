@@ -21,7 +21,7 @@ def load_ucr_dataset_as_dict(number):
 
             for j, time_series in enumerate(chunk):
                 data = normalize(time_series.squeeze())
-                file_contents.append({'dataset': file_name, 'no.': counter, 'data': data})
+                file_contents.append({'dataset': file_name, 'num': counter, 'data': data})
                 counter += 1
 
         return file_contents
@@ -50,7 +50,6 @@ def normalize(time_series):
     :param [float] time_series: a list of y-values
     :return [(float,float)] data_tuples: normalized y-values and the corresponding x-values
     """
-    # normalized_ts = scipy.stats.zscore(np.array(time_series))
     normalized_ts = scipy.stats.zscore(time_series)
     data_tuples = [(i / (len(normalized_ts) - 1), normalized_ts[i]) for i in range(len(normalized_ts))]
     return data_tuples
