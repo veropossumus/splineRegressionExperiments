@@ -36,12 +36,19 @@ def load_ucr_dataset(number):
     return pd.DataFrame(dataset)
 
 
-def load_ucr_archive():
+def load_ucr_archive(min_ts_length=None, max_ts_length=None):
     datasets = []
     for i in range(len(os.listdir(path))):
         datasets.extend(load_ucr_dataset_as_dict(i))
 
-    return pd.DataFrame(datasets)
+    df = pd.DataFrame(datasets)
+
+    if min_ts_length is not None:
+        df = df[df['data'].apply(len) >= min_ts_length]
+    if max_ts_length is not None:
+        df = df[df['data'].apply(len) <= max_ts_length]
+
+    return df
 
 
 def normalize(time_series):
