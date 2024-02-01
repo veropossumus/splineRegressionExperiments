@@ -35,9 +35,35 @@ def calculate_max_dist(knots, coeffs, n, data):
     return max_dist, max_dist_idx
 
 
-def generate_knot_counts(num_data_pts, degree, ratios):
+
+
+
+def generate_coeff_counts(num_data_pts, degree, compression_ratios):
+    counts = [int(ratio * num_data_pts) for ratio in compression_ratios]
+    # assert all(count >= degree + 1 for count in counts)
+    for i, count in enumerate(counts):
+        if count < degree + 1:
+            print("problem: count", count, "for degree", degree, ", but should be >=", degree + 1, "comp_ratio:",
+                  compression_ratios[i])
+    return counts
+
+
+def generate_knot_vector_from_coeff_count(degree, num_coeffs):
+    num_knots = num_coeffs + degree + 1
+    num_end_knots_each = degree + 1
+    assert num_knots >= 2 * num_end_knots_each
+    num_internal_knots = num_knots - 2 * num_end_knots_each
+
+    internal_knots = [((x + 1) / (num_internal_knots + 1)) for x in range(num_internal_knots)]
+    knot_vector = num_end_knots_each * [0] + internal_knots + num_end_knots_each * [1]
+    #print("knot_vector:", knot_vector)
+    return knot_vector
+
+
+def generate_knot_counts(num_data_pts, degree, compression_ratios):
     num_end_knots_total = 2 * (degree + 1)
-    counts = [max(int(ratio * num_data_pts), num_end_knots_total) for ratio in ratios]
+
+    counts = [max(int(ratio * num_data_pts), num_end_knots_total) for ratio in compression_ratios]
     return counts
 
 
