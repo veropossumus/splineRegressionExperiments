@@ -29,10 +29,10 @@ def plot_splines(axis, knots, n, data, plot_LSQ=False, plot_max=True, plot_max_l
         if plot_max_l1:
             labels.append(r'$L_{\infty}$ and $L_1$')
             results.append(fit_max_l1_spline(data, knots, n, eps=eps, t=max_dist)[1])
-
-    if plot_max_l1:
-        labels.append(r'$L_{\infty}$ and $L_1$')
-        results.append(fit_max_l1_spline(data, knots, n, eps=eps)[1])
+    else:
+        if plot_max_l1:
+            labels.append(r'$L_{\infty}$ and $L_1$')
+            results.append(fit_max_l1_spline(data, knots, n, eps=eps)[1])
 
     if plot_DFT:
         labels.append('DFT')

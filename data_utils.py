@@ -1,15 +1,49 @@
+import os
+
+import numpy as np
 import pandas as pd
 import scipy
 from aeon.datasets import load_from_tsfile
 from sklearn.neighbors import LocalOutlierFactor
-import os
-import math
 
 path = "../data/Univariate2018_ts"
 
 
+def load_gbnc_data(file_name="nopos_al_excerpt.txt"):
+    # file_name = "nopos_al_excerpt.txt"
+    dir_path = "../../data/nopos"
+    file_path = os.path.join(dir_path, file_name)
+
+    return pd.DataFrame(load_from_gbnc_file(file_path))
+
+
+def load_from_gbnc_file(file_path):
+    file = open(file_path, 'r', encoding="utf-8")
+    data_list = []
+
+    for line in file:
+        ngram = line.strip().split('\t')
+        ngram_name = ngram[0]
+        values = [tuple(map(int, x.split(','))) for x in ngram[1:]]
+        values.sort(key=lambda x: x[0])
+
+        data_tuples = [(values[0][0], values[0][1])]
+
+        # fill in missing years with word count of 0
+        for i in range(1, len(values)):
+            year_diff = values[i][0] - data_tuples[-1][0]
+            assert (year_diff > 0)
+            if year_diff != 1:
+                for j in range(1, year_diff):
+                    data_tuples.append((data_tuples[-1][0] + 1, 0))
+
+            data_tuples.append((values[i][0], values[i][1]))
+
+        data_list.append({'dataset': "GBNC", 'ngram': ngram_name, 'data': [x[1] for x in data_tuples]})
+    return data_list
+
+
 def load_ucr_dataset_as_dict(number):
-    chunk_size = 100
     file_contents = []
     try:
         file_name = os.listdir(path)[number]
@@ -17,14 +51,12 @@ def load_ucr_dataset_as_dict(number):
         dataset = load_from_tsfile(file_path, return_type="numpy2D")[0]
 
         counter = 0
-        for i in range(0, len(dataset), chunk_size):
-            chunk = dataset[i:i + chunk_size]
-
-            for j, time_series in enumerate(chunk):
-                if not any(math.isnan(value) for value in time_series): # skip time series containing NaN
-                    data = normalize(time_series.squeeze())
-                    file_contents.append({'dataset': file_name, 'num': counter, 'data': data})
-                    counter += 1
+        for i in range(len(dataset)):
+            time_series = dataset[i].squeeze()
+            if not np.isnan(time_series).any():
+                data = normalize(time_series)
+                file_contents.append({'dataset': file_name, 'num': counter, 'data': data})
+                counter += 1
 
         return file_contents
 
