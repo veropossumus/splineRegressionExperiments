@@ -60,7 +60,7 @@ def generate_knot_vector_from_coeff_count(degree, num_coeffs):
     return knot_vector
 
 
-def generate_knot_counts(num_data_pts, degree, compression_ratios):
+"""def generate_knot_counts(num_data_pts, degree, compression_ratios):
     num_end_knots_total = 2 * (degree + 1)
 
     counts = [max(int(ratio * num_data_pts), num_end_knots_total) for ratio in compression_ratios]
@@ -74,4 +74,4 @@ def generate_knot_vector(degree, num_knots):
     internal_knots = [((x + 1) / (num_internal_knots + 1)) for x in range(num_internal_knots)]
     knot_vector = num_end_knots_each * [0] + internal_knots + num_end_knots_each * [1]
 
-    return knot_vector
+    return knot_vector"""

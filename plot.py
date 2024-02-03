@@ -22,7 +22,7 @@ def plot_splines(axis, knots, n, data, plot_LSQ=False, plot_max=True, plot_max_l
         results.append(scipy.interpolate.make_lsq_spline([x[0] for x in data], [x[1] for x in data], knots, k=n).c)
 
     if plot_max:
-        labels.append('r$L_{\infty}$')
+        labels.append(r'$L_{\infty}$')
         max_dist, result_max = fit_max_spline(data, knots, n)
         results.append(result_max)
 

@@ -3,12 +3,13 @@ import scipy
 from aeon.datasets import load_from_tsfile
 from sklearn.neighbors import LocalOutlierFactor
 import os
+import math
 
 path = "../data/Univariate2018_ts"
 
 
 def load_ucr_dataset_as_dict(number):
-    chunk_size = 50
+    chunk_size = 100
     file_contents = []
     try:
         file_name = os.listdir(path)[number]
@@ -20,9 +21,10 @@ def load_ucr_dataset_as_dict(number):
             chunk = dataset[i:i + chunk_size]
 
             for j, time_series in enumerate(chunk):
-                data = normalize(time_series.squeeze())
-                file_contents.append({'dataset': file_name, 'num': counter, 'data': data})
-                counter += 1
+                if not any(math.isnan(value) for value in time_series): # skip time series containing NaN
+                    data = normalize(time_series.squeeze())
+                    file_contents.append({'dataset': file_name, 'num': counter, 'data': data})
+                    counter += 1
 
         return file_contents
 

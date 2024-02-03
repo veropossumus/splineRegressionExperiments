@@ -69,7 +69,7 @@ def fit_max_l1_spline(data, knots, n, eps=0, t=None):
         row.extend([0] * (i % k) + [-1] + [0] * (k - (i % k) - 1))
         A.append(row)
 
-    x2 = linprog(c, A_ub=A, b_ub=b, bounds=bounds, method='highs-ipm')
+    x2 = linprog(c, A_ub=A, b_ub=b, bounds=bounds, method='highs')
 
     if x2['status'] != 0:
         print("x2 status", x2['status'])
