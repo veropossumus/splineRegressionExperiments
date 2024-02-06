@@ -19,6 +19,9 @@ def plot_splines(axis, knots, degree, data, eps=0.000001, plot_max=True, plot_ma
     results = []
     labels = []
 
+    # TODO Grad entfernen (ACHTUNG! darauf achten, dass der richtige Grad hier ankommt)
+    degree = 3
+
     if plot_LSQ:
         try:
             labels.append(r'$L_2$')
@@ -50,22 +53,22 @@ def plot_splines(axis, knots, degree, data, eps=0.000001, plot_max=True, plot_ma
         max_dist, result_max = fit_max_spline(data, knots, 0)
         results.append((0, result_max))
 
-    max_dists = [calculate_max_dist(knots, result, degree, data)[0] for degree,result in results]
+    max_dists = [calculate_max_dist(knots, result, degree, data)[0] for degree, result in results]
     colors = list(mcolors.BASE_COLORS.keys())
 
     xs = np.linspace(0, 1, num=1000)
 
-    print("opt distance", max_dist)
+    # print("optimum distance", max_dist)
 
     for i in range(len(results)):
         degree = results[i][0]
-        y_values = results[i][1]
-        axis.plot(xs, [evaluate_spline(knots, y_values, degree, x) for x in xs], colors[i % len(colors)] + '-',
+        coeffs = results[i][1]
+        axis.plot(xs, [evaluate_spline(knots, coeffs, degree, x) for x in xs], colors[i % len(colors)] + '-',
                   label=labels[i])
         if len(max_dists) > 0:
-            axis.plot(xs, [evaluate_spline(knots, y_values, degree, x) + max_dists[i] for x in xs],
+            axis.plot(xs, [evaluate_spline(knots, coeffs, degree, x) + max_dists[i] for x in xs],
                       colors[i % len(colors)] + '--')
-            axis.plot(xs, [evaluate_spline(knots, y_values, degree, x) - max_dists[i] for x in xs],
+            axis.plot(xs, [evaluate_spline(knots, coeffs, degree, x) - max_dists[i] for x in xs],
                       colors[i % len(colors)] + '--')
 
     """for i in range(len(results)):
@@ -80,6 +83,7 @@ def plot_splines(axis, knots, degree, data, eps=0.000001, plot_max=True, plot_ma
     axis.scatter([d[0] for d in data], [d[1] for d in data], marker='.')
     print("number of data points:", len(data))
     axis.legend()
+    plt.show()
 
 
 def plot_errors_against_degrees(dataframe):
