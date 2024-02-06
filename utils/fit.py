@@ -1,3 +1,5 @@
+import scipy
+
 from utils.spline import evaluate_b_spline
 import numpy as np
 from pyts.approximation import DiscreteFourierTransform, PiecewiseAggregateApproximation
@@ -75,15 +77,46 @@ def fit_max_l1_spline(data, knots, n, eps=0, t=None):
         print("x2 status", x2['status'])
         print("NOT SUCCESSFUL")
         print(x2['message'])
+        return None, None
 
     return x2['fun'], x2['x'][:m]
 
 
 def fit_DFT(data, num_coeffs):
-    y_values = [tup[1] for tup in data]
-    return DiscreteFourierTransform(n_coefs=num_coeffs).fit_transform([y_values])
+    X = [[x[1] for x in data]]
+    dft = DiscreteFourierTransform(n_coefs=num_coeffs, norm_mean=True, norm_std=True)
+    X_dft = dft.fit_transform(X)
+    return X_dft
+
+    # y_values = [tup[1] for tup in data]
+    # return DiscreteFourierTransform(n_coefs=num_coeffs).fit_transform([y_values])
     # X = [y_values, [1] * len(y_values)]
     # return DiscreteFourierTransform(n_coefs=num_coeffs).fit_transform(X)
+
+
+def calculate_inverse_DFT(num_data_pts, num_coeffs, X_dft):
+    n_coefs = num_coeffs
+    n_samples = 1
+    n_timestamps = num_data_pts
+
+    if n_coefs % 2 == 0:
+        real_idx = np.arange(1, n_coefs, 2)
+        imag_idx = np.arange(2, n_coefs, 2)
+        X_dft_new = np.c_[
+            X_dft[:, :1],
+            X_dft[:, real_idx] + 1j * np.c_[X_dft[:, imag_idx],
+            np.zeros((n_samples,))]
+        ]
+    else:
+        real_idx = np.arange(1, n_coefs, 2)
+        imag_idx = np.arange(2, n_coefs + 1, 2)
+        X_dft_new = np.c_[
+            X_dft[:, :1],
+            X_dft[:, real_idx] + 1j * X_dft[:, imag_idx]
+        ]
+
+    X_irfft = np.fft.irfft(X_dft_new, n_timestamps)[0]
+    return scipy.stats.zscore(X_irfft)
 
 
 def fit_PAA(data, num_coeffs):

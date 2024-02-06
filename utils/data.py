@@ -6,11 +6,11 @@ import scipy
 from aeon.datasets import load_from_tsfile
 from sklearn.neighbors import LocalOutlierFactor
 
-path = "../../data/Univariate2018_ts"
+path = "../data/Univariate2018_ts"
 
 
 def load_gbnc_data(file_name="nopos_al_excerpt.txt"):
-    dir_path = "../../data/nopos"
+    dir_path = "../data/nopos"
     file_path = os.path.join(dir_path, file_name)
 
     return pd.DataFrame(load_from_gbnc_file(file_path))
