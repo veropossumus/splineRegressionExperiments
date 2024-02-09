@@ -1,11 +1,43 @@
 import scipy
 import numpy as np
 import matplotlib.colors as mcolors
+
+from utils.data import replace_outliers
 from utils.spline import evaluate_spline
 import matplotlib.pyplot as plt
 
 from utils.fit import fit_max_spline, fit_max_l1_spline
 from utils.spline import calculate_max_dist
+from math import sqrt
+import pandas as pd
+
+import scipy
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+from utils.spline import evaluate_spline, calculate_max_dist
+from utils.fit import fit_max_spline, fit_max_l1_spline
+
+
+def calculate_errors(data_tuples, knots, n):
+    result1 = scipy.interpolate.make_lsq_spline([x[0] for x in data_tuples], [x[1] for x in data_tuples], knots, k=n).c
+    result2 = fit_max_spline(data_tuples, knots, n)[1]
+    result3 = fit_max_l1_spline(data_tuples, knots, n, eps=eps)[1]
+
+    results = [result1, result2, result3]
+
+    errors = []
+    data_points = [x[1] for x in data_tuples]
+    counter = 0
+    for result in results:
+        counter += 1
+        fitted_spline = [evaluate_spline(knots, result, n, x[0]) for x in data_tuples]  # data_points]
+        max_dist = calculate_max_dist(knots, result, n, data_tuples)[0]
+        errors.append([max_dist,  # maximum absolute distance,
+                       mean_squared_error(data_points, fitted_spline),  # MSE
+                       sqrt(mean_squared_error(data_points, fitted_spline)),  # RMSE
+                       mean_absolute_error(data_points, fitted_spline)  # MAE
+                       ])
+
+    return errors
 
 
 def plot_data(data):
@@ -14,21 +46,97 @@ def plot_data(data):
     plt.show()
 
 
-def plot_splines(axis, knots, degree, data, eps=0.000001, plot_max=True, plot_max_l1=True, plot_LSQ=True, plot_PAA=True,
-                 plot_PLA=True):
+def plot_splines_with_without_outliers(data, data_lof, knots, degree, eps=0.000001, plot_max=True, plot_max_l1=True,
+                                       plot_LSQ=False, plot_PAA=False, plot_PLA=False):
+    row_names = ['LSQ', 'Max', 'Max and L1']
+
+    assert (len(data) == len(data_lof))
+
+    for i in range(len(data)):
+        f, axes = plt.subplots(1, 2, sharey=True)
+        f.set_figwidth(12)
+
+        df1 = pd.DataFrame(error_metrics, columns=['max_dist', 'MSE', 'RMSE', 'MAE'])
+        df1.index = row_names
+        print(df1)
+
+        # plot_splines(axes[0], data[i], fitting_methods)
+        plot_splines(knots=knots, degree=degree, data=data[i], axis=axes[0], eps=eps, plot_max=plot_max,
+                     plot_max_l1=plot_max_l1, plot_LSQ=plot_LSQ, plot_PAA=plot_PAA, plot_PLA=plot_PLA)
+        axes[0].set_title("Data including outliers")
+
+        error_metrics = calculate_errors(data_lof[i], knots, degree)
+        df2 = pd.DataFrame(error_metrics, columns=['max_dist', 'MSE', 'RMSE', 'MAE'])
+        df2.index = row_names
+        print(df2)
+
+        # plot_splines(axes[1], data_lof[i], fitting_methods)
+        plot_splines(knots=knots, degree=degree, data=data_lof[i], axis=axes[1], eps=eps, plot_max=plot_max,
+                     plot_max_l1=plot_max_l1, plot_LSQ=plot_LSQ, plot_PAA=plot_PAA, plot_PLA=plot_PLA,
+                     outliers_removed=True, original_xs=[tup[0] for tup in data])
+        axes[1].set_title("Data without outliers")
+
+        plt.subplots_adjust(bottom=0.25, top=0.95)
+
+        plt.show()
+
+
+def add_fitted_curve_to_plot(axis, fitted_curve: [float], max_dist: float, color: str, label: str = None):
+    xs = np.linspace(0, 1, num=len(fitted_curve))
+    axis.plot(xs, fitted_curve, color=color, linestyle='solid', label=label)
+    if abs(max_dist) > 0:
+        axis.plot(xs, [y + max_dist for y in fitted_curve], color=color, linestyle='dashed')
+        axis.plot(xs, [y - max_dist for y in fitted_curve], color=color, linestyle='dashed')
+
+
+def plot_fitted_curve(axis, fitted_curve: [float], max_dist: float, xs=None, label=None):
+    # xs = np.linspace(0, 1, num=1000) # wie wichtig ist das? warum nicht einfach len(fitted_curve)?
+    if xs is None:
+        xs = np.linspace(0, 1, num=len(fitted_curve))
+
+    axis.plot(xs, fitted_curve, linestyle='solid', label=label)
+    if abs(max_dist) > 0:
+        axis.plot(xs, [y + max_dist for y in fitted_curve], linestyle='dashed')
+        axis.plot(xs, [y - max_dist for y in fitted_curve], linestyle='dashed')
+
+    axis.legend()
+    plt.show()
+
+
+def plot_splines(knots, degree, data, axis=None, eps=0.000001, plot_max=True, plot_max_l1=True, plot_LSQ=True,
+                 plot_PAA=True, plot_PLA=True, outliers_removed=False, original_xs=None):
     results = []
     labels = []
 
-    # TODO Grad entfernen (ACHTUNG! darauf achten, dass der richtige Grad hier ankommt)
-    degree = 3
+    if axis is None:
+        axis = plt
 
     if plot_LSQ:
-        try:
+        print("outliers_removed?", outliers_removed)
+        if (outliers_removed):  # & (original_xs is not None):
+            if original_xs is None:
+                print("please provide the complete list of x-values of the original time series")
+                return
+            else:
+                labels.append(r'$L_2$')
+                ts_with_replacements = replace_outliers(data, original_xs)
+                results.append((degree, scipy.interpolate.make_lsq_spline([x[0] for x in ts_with_replacements],
+                                                                          [x[1] for x in ts_with_replacements], knots,
+                                                                          k=degree).c))
+        elif not outliers_removed:
+            labels.append(r'$L_2$')
+            results.append((degree, scipy.interpolate.make_lsq_spline([x[0] for x in data], [x[1] for x in data], knots,
+                                                                      k=degree).c))
+        """try:
             labels.append(r'$L_2$')
             results.append((degree, scipy.interpolate.make_lsq_spline([x[0] for x in data], [x[1] for x in data], knots,
                                                                       k=degree).c))
         except:
-            print("LSQ problem")
+            try:
+                labels.append(r'$L_2$')
+            results.append((degree, scipy.interpolate.make_lsq_spline([x[0] for x in data], [x[1] for x in data], knots,
+                                                                      k=degree).c))
+            print("LSQ problem")"""
 
     if plot_max:
         labels.append(r'$L_{\infty}$')

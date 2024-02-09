@@ -1,8 +1,10 @@
+import math
 import os
 
 import numpy as np
 import pandas as pd
 import scipy
+import math
 from aeon.datasets import load_from_tsfile
 from sklearn.neighbors import LocalOutlierFactor
 
@@ -93,22 +95,30 @@ def load_ucr_data_medium():
     return load_ucr_archive(200, 499)
 
 
-def normalize(time_series):
+def load_ucr_data_short_and_medium():
+    return load_ucr_archive(50, 499)
+
+
+def normalize(time_series: [float]) -> [(float, float)]:
     """
     Normalizes a time series.
-    :param [float] time_series: a list of y-values
-    :return [(float,float)] data_tuples: normalized y-values and the corresponding x-values
+    :param time_series: a list of y-values
+    :return data_tuples: normalized y-values and the corresponding x-values
     """
     normalized_ts = scipy.stats.zscore(time_series)
-    data_tuples = [(i / (len(normalized_ts) - 1), normalized_ts[i]) for i in range(len(normalized_ts))]
+    indices = np.linspace(0, 1, len(normalized_ts))
+    data_tuples = list(zip(indices, normalized_ts))
     return data_tuples
 
 
-def remove_outliers(time_series):
+# TODO check if implemented correctly
+def remove_outliers(time_series: [(int, int)]):
     lof = LocalOutlierFactor()
     filtered_ts = []
 
-    outliers = lof.fit_predict(time_series)
+    y_values = [[tup[1]] for tup in time_series]
+
+    outliers = lof.fit_predict(y_values)
     assert (len(outliers) == len(time_series))
 
     for i in range(len(outliers)):
@@ -116,3 +126,85 @@ def remove_outliers(time_series):
             filtered_ts.append(time_series[i])
 
     return filtered_ts
+
+
+"""def remove_outliers(time_series: [(int, int)]):  # old version
+    lof = LocalOutlierFactor()
+    filtered_ts = []
+
+    outliers = lof.fit_predict(time_series)  # does not match expected format I think (see above)
+    assert (len(outliers) == len(time_series))
+
+    for i in range(len(outliers)):
+        if outliers[i] == 1:
+            filtered_ts.append(time_series[i])
+
+    return filtered_ts
+    """
+
+
+def replace_outliers(ts_without_outliers: [(int, int)], original_xs: [int]):
+    ts_with_replacements = [(x, "nan") for x in original_xs]
+
+    for i in range(len(ts_with_replacements)):
+        x = ts_with_replacements[i][0]
+        for j in range(len(ts_without_outliers)):
+            if x == ts_without_outliers[j][0]:
+                ts_with_replacements[i] = ts_without_outliers[j]
+
+    first_number_idx = 0  # contains index of first tuple where y-value is not "nan"
+    while ts_with_replacements[first_number_idx][1] == "nan":
+        first_number_idx += 1
+
+    # fill gaps at the beginning with copy of first number
+    for i in range(first_number_idx):
+        new_tuple = (ts_with_replacements[i][0], ts_with_replacements[first_number_idx][1])
+        ts_with_replacements[i] = new_tuple
+
+    # same for last number (but in reverse)
+    last_number_idx = len(ts_with_replacements) - 1
+    while ts_with_replacements[last_number_idx][1] == "nan":
+        last_number_idx -= 1
+
+    # fill gaps at the end with copy of last number
+    for i in range(len(ts_with_replacements) - 1, last_number_idx, -1):
+        new_tuple = (ts_with_replacements[i][0], ts_with_replacements[last_number_idx][1])
+        ts_with_replacements[i] = new_tuple
+
+    # lin. interpolation for gaps in the middle (copy interpolated value for gaps >= 2)
+    for i in range(first_number_idx, last_number_idx):
+        if ts_with_replacements[i][1] == "nan":
+
+            # find next tuple where y-value is not "nan"
+            next_number_idx = i + 1
+
+            while ts_with_replacements[next_number_idx][1] == "nan":
+                next_number_idx += 1
+
+            gap_len = next_number_idx - i
+            previous_y = ts_with_replacements[i - 1][1]
+            next_y = ts_with_replacements[next_number_idx][1]
+
+            assert type(previous_y) is not str
+            assert type(next_y) is not str
+
+            new_y_value = (previous_y + next_y) / 2
+
+            for j in range(gap_len):
+                new_tuple = (ts_with_replacements[i + j][0], new_y_value)
+                ts_with_replacements[i + j] = new_tuple
+
+    return ts_with_replacements
+
+
+"""
+
+def replace_outliers(time_series: [(int, int)], xs: [int]):
+
+    ts_with_replacements = []
+tol = 1e-9  # tolerance for float comparison
+# if abs(xs[0] - time_series[0][0]) >= tol:
+if xs[0] != time_series[0][0]:
+
+    for i, x in enumerate(xs):
+        if time_series[i][0] != x: """

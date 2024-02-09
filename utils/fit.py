@@ -1,12 +1,12 @@
 import scipy
 
-from utils.spline import evaluate_b_spline
+from utils.spline import evaluate_b_spline, calculate_max_dist
 import numpy as np
 from pyts.approximation import DiscreteFourierTransform, PiecewiseAggregateApproximation
 from scipy.optimize import linprog
 
 
-def fit_max_spline(data, knots, n):
+def fit_max_spline(data, knots, n) -> [float, [float]]:
     m = len(knots) - n - 1
     k = len(data)
 
@@ -37,7 +37,7 @@ def fit_max_spline(data, knots, n):
     return x['fun'], x['x'][:-1]
 
 
-def fit_max_l1_spline(data, knots, n, eps=0, t=None):
+def fit_max_l1_spline(data, knots, n, eps=0, t=None) -> [float, [float]]:
     m = len(knots) - n - 1
     k = len(data)
 
@@ -82,7 +82,14 @@ def fit_max_l1_spline(data, knots, n, eps=0, t=None):
     return x2['fun'], x2['x'][:m]
 
 
-def fit_DFT(data, num_coeffs):
+def fit_LSQ_spline(time_series: [(int, int)], knots: [int], degree: int) -> [float]:
+    xs = [x[0] for x in time_series]
+    ys = [x[1] for x in time_series]
+    result = scipy.interpolate.make_lsq_spline(xs, ys, knots, k=degree).c
+    return result
+
+
+def fit_DFT(data, num_coeffs) -> [float]:
     X = [[x[1] for x in data]]
     dft = DiscreteFourierTransform(n_coefs=num_coeffs, norm_mean=True, norm_std=True)
     X_dft = dft.fit_transform(X)
@@ -119,10 +126,10 @@ def calculate_inverse_DFT(num_data_pts, num_coeffs, X_dft):
     return scipy.stats.zscore(X_irfft)
 
 
-def fit_PAA(data, num_coeffs):
+"""def fit_PAA(data, num_coeffs):
     y_values = [tup[1] for tup in data]
     return PiecewiseAggregateApproximation(window_size=None, output_size=num_coeffs).fit_transform([y_values])
     # X = [y_values, [1] * len(y_values)]
     # return PiecewiseAggregateApproximation(window_size=None, output_size=num_coeffs).fit_transform(X=X)
-
+"""
 # %%
