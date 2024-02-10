@@ -37,7 +37,6 @@ def calculate_max_dist(knots, coeffs, n, data):
 
 def generate_coeff_counts(num_data_pts, degree, compression_ratios):
     counts = [int(ratio * num_data_pts) for ratio in compression_ratios]
-    # assert all(count >= degree + 1 for count in counts)
     for i, count in enumerate(counts):
         if count < degree + 1:
             print("problem: count", count, "for degree", degree, ", but should be >=", degree + 1, "comp_ratio:",
