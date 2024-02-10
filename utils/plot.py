@@ -6,7 +6,7 @@ from utils.data import replace_outliers
 from utils.spline import evaluate_spline
 import matplotlib.pyplot as plt
 
-from utils.fit import fit_max_spline, fit_max_l1_spline
+from utils.fit import fit_max_spline, fit_max_l1_spline, calculate_inverse_DFT
 from utils.spline import calculate_max_dist
 from math import sqrt
 import pandas as pd
@@ -81,8 +81,7 @@ def plot_splines_with_without_outliers(data, data_lof, knots, degree, eps=0.0000
         plt.show()
 
 
-def add_fitted_curve_to_plot(axis, fitted_curve: [float], max_dist: float, color: str, label: str = None):
-    xs = np.linspace(0, 1, num=len(fitted_curve))
+def add_fitted_curve_to_plot(axis, xs, fitted_curve: [float], max_dist: float, color: str, label: str = None):
     axis.plot(xs, fitted_curve, color=color, linestyle='solid', label=label)
     if abs(max_dist) > 0:
         axis.plot(xs, [y + max_dist for y in fitted_curve], color=color, linestyle='dashed')
@@ -90,7 +89,6 @@ def add_fitted_curve_to_plot(axis, fitted_curve: [float], max_dist: float, color
 
 
 def plot_fitted_curve(axis, fitted_curve: [float], max_dist: float, xs=None, label=None):
-    # xs = np.linspace(0, 1, num=1000) # wie wichtig ist das? warum nicht einfach len(fitted_curve)?
     if xs is None:
         xs = np.linspace(0, 1, num=len(fitted_curve))
 
@@ -218,13 +216,11 @@ def plot_errors_against_compression_rates_avg_degree(dataframe):
 
     for i, metric in enumerate(metrics):
         avg_mse_by_compression_rate = dataframe.groupby('compression_rate')[metric].mean()
-        axs[i].plot(avg_mse_by_compression_rate.index, avg_mse_by_compression_rate.values, marker='o',
-                    linestyle='-')
+        axs[i].plot(avg_mse_by_compression_rate.index, avg_mse_by_compression_rate.values, marker='o', linestyle='-')
         axs[i].set_xlabel('compression_rate')
         axs[i].set_ylabel('avg. ' + metric)
-        axs[i].set_title(
-            'avg. ' + metric + ' vs. compression_rate (over degrees 0 to ' + str(
-                max(dataframe['degree'].unique())) + ')')
+        axs[i].set_title('avg. ' + metric + ' vs. compression_rate (over degrees 0 to ' + str(
+            max(dataframe['degree'].unique())) + ')')
         axs[i].set_xticks(compression_ratios)
         axs[i].grid(True)
 
@@ -240,8 +236,7 @@ def plot_errors_against_compression_rates_for_each_degree(dataframe):
         for i, metric in enumerate(metrics):
             avg_metric_by_compression = sub_df.groupby('compression_rate')[metric].mean()
             print()
-            axs[i].plot(avg_metric_by_compression.index, avg_metric_by_compression.values, marker='o',
-                        linestyle='-')
+            axs[i].plot(avg_metric_by_compression.index, avg_metric_by_compression.values, marker='o', linestyle='-')
             axs[i].set_xlabel('compression_rate')
             axs[i].set_ylabel('avg. ' + metric)
             axs[i].set_title('avg. ' + metric + ' for degree ' + str(degree))
