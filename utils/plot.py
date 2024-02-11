@@ -41,8 +41,9 @@ def calculate_errors(data_tuples, knots, n):
 
 
 def plot_data(data):
-    for elem in data:
-        plt.scatter([d[0] for d in elem], [d[1] for d in elem], marker='.')
+    plt.scatter([d[0] for d in data], [d[1] for d in data], marker='.')
+    """for elem in data:
+        plt.scatter([d[0] for d in elem], [d[1] for d in elem], marker='.')"""
     plt.show()
 
 
@@ -88,16 +89,14 @@ def add_fitted_curve_to_plot(axis, xs, fitted_curve: [float], max_dist: float, c
         axis.plot(xs, [y - max_dist for y in fitted_curve], color=color, linestyle='dashed')
 
 
-def plot_fitted_curve(axis, fitted_curve: [float], max_dist: float, xs=None, label=None):
-    if xs is None:
-        xs = np.linspace(0, 1, num=len(fitted_curve))
-
-    axis.plot(xs, fitted_curve, linestyle='solid', label=label)
+def plot_fitted_curve(xs, fitted_curve: [float], max_dist: float, label=None):
+    color = "tab:blue"
+    plt.plot(xs, fitted_curve, color=color, linestyle='solid', label=label)
     if abs(max_dist) > 0:
-        axis.plot(xs, [y + max_dist for y in fitted_curve], linestyle='dashed')
-        axis.plot(xs, [y - max_dist for y in fitted_curve], linestyle='dashed')
+        plt.plot(xs, [y + max_dist for y in fitted_curve], color=color, linestyle='dashed')
+        plt.plot(xs, [y - max_dist for y in fitted_curve], color=color, linestyle='dashed')
 
-    axis.legend()
+    plt.legend()
     plt.show()
 
 
