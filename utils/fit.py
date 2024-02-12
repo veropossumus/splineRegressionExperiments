@@ -1,9 +1,12 @@
+import sys
+
 import scipy
 
 from utils.spline import evaluate_b_spline, calculate_max_dist
 import numpy as np
 from pyts.approximation import DiscreteFourierTransform, PiecewiseAggregateApproximation
 from scipy.optimize import linprog
+from scipy.sparse import csr_matrix
 
 
 def fit_max_spline(data, knots, n) -> [float, [float]]:
@@ -24,15 +27,21 @@ def fit_max_spline(data, knots, n) -> [float, [float]]:
         row.append(-1)
         A.append(row)
 
+    A_sparse = csr_matrix(A)
+
     bounds = (None, None)
 
-    x = linprog(c, A_ub=A, b_ub=b, bounds=bounds)
+    x = linprog(c, A_ub=A_sparse, b_ub=b, bounds=bounds, options={'disp': True})
 
     if x['status'] != 0:
-        print("x status", x['status'])
-        print("x['message']", x['message'])
         print("problem for knot count", len(knots), "and degree", n, "i.e. for num_coeff =", len(knots) - n - 1)
-        return None, None
+        print(x)
+        print("now switching from HiGHS to simplex ...")
+        x = linprog(c, A_ub=A, b_ub=b, bounds=bounds, method='simplex', options={'disp': True})
+        if x['status'] != 0:
+            print("problem persists")
+            print(x)
+            return None, None
 
     return x['fun'], x['x'][:-1]
 
@@ -95,11 +104,6 @@ def fit_DFT(data, num_coeffs) -> [float]:
     X_dft = dft.fit_transform(X)
     return X_dft
 
-    # y_values = [tup[1] for tup in data]
-    # return DiscreteFourierTransform(n_coefs=num_coeffs).fit_transform([y_values])
-    # X = [y_values, [1] * len(y_values)]
-    # return DiscreteFourierTransform(n_coefs=num_coeffs).fit_transform(X)
-
 
 def calculate_inverse_DFT(num_data_pts, num_coeffs, X_dft):
     n_coefs = num_coeffs
@@ -123,7 +127,12 @@ def calculate_inverse_DFT(num_data_pts, num_coeffs, X_dft):
         ]
 
     X_irfft = np.fft.irfft(X_dft_new, n_timestamps)[0]
-    return scipy.stats.zscore(X_irfft)
+
+    result = scipy.stats.zscore(X_irfft)
+    if np.isnan(result).all():
+        result = np.nan_to_num(result, nan=0)
+
+    return result
 
 
 """def fit_PAA(data, num_coeffs):

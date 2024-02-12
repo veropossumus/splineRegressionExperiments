@@ -39,11 +39,13 @@ def calculate_errors(data_tuples, knots, n):
 
     return errors
 
+def plot_time_series(time_series):
+    plt.scatter([d[0] for d in time_series], [d[1] for d in time_series], marker='.')
+    plt.show()
 
 def plot_data(data):
-    plt.scatter([d[0] for d in data], [d[1] for d in data], marker='.')
-    """for elem in data:
-        plt.scatter([d[0] for d in elem], [d[1] for d in elem], marker='.')"""
+    for elem in data:
+        plt.scatter([d[0] for d in elem], [d[1] for d in elem], marker='.')
     plt.show()
 
 
