@@ -20,7 +20,7 @@ from utils.fit import fit_max_spline, fit_max_l1_spline
 def calculate_errors(data_tuples, knots, n):
     result1 = scipy.interpolate.make_lsq_spline([x[0] for x in data_tuples], [x[1] for x in data_tuples], knots, k=n).c
     result2 = fit_max_spline(data_tuples, knots, n)[1]
-    result3 = fit_max_l1_spline(data_tuples, knots, n, eps=eps)[1]
+    result3 = fit_max_l1_spline(data_tuples, knots, n, eps=1e-6)[1]
 
     results = [result1, result2, result3]
 
