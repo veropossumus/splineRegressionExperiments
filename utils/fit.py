@@ -83,9 +83,21 @@ def fit_max_l1_spline(data, knots, n, eps=0, t=None) -> [float, [float]]:
     x2 = linprog(c, A_ub=A, b_ub=b, bounds=bounds)
 
     if x2['status'] != 0:
-        print("x2 status", x2['status'])
+        print("problem for knot count", len(knots), "and degree", n, "i.e. for num_coeff =", len(knots) - n - 1)
+
+        while eps < 1e-6:
+            print("increasing eps from", eps, "to", eps+1e-7)
+            eps += 1e-7
+            bounds = [(None, None) for _ in range(m)] + [(0, t + eps)] + [(None, None) for _ in range(k)]
+            x2 = linprog(c, A_ub=A, b_ub=b, bounds=bounds)
+            if x2['status'] == 0:
+                print("success for eps =", eps)
+                return x2['fun'], x2['x'][:m]
+
         print("NOT SUCCESSFUL")
+        print("x2 status", x2['status'])
         print(x2['message'])
+        print("x2 \n:",x2)
         return None, None
 
     return x2['fun'], x2['x'][:m]
@@ -100,7 +112,7 @@ def fit_LSQ_spline(time_series: [(int, int)], knots: [int], degree: int) -> [flo
 
 def fit_DFT(data, num_coeffs) -> [float]:
     X = [[x[1] for x in data]]
-    dft = DiscreteFourierTransform(n_coefs=num_coeffs, norm_mean=True, norm_std=True)
+    dft = DiscreteFourierTransform(n_coefs=num_coeffs)#, norm_mean=True, norm_std=True)
     X_dft = dft.fit_transform(X)
     return X_dft
 
