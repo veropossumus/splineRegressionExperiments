@@ -33,12 +33,13 @@ def fit_max_spline(data, knots, n) -> [float, [float]]:
     if x['status'] != 0:
         print("problem for knot count", len(knots), "and degree", n, "i.e. for num_coeff =", len(knots) - n - 1)
         print(x)
-        print("now switching from HiGHS to simplex ...")
+        return None, None
+        """print("now switching from HiGHS to simplex ...")
         x = linprog(c, A_ub=A, b_ub=b, bounds=bounds, method='simplex', options={'disp': True})
         if x['status'] != 0:
             print("problem persists")
             print(x)
-            return None, None
+            return None, None"""
 
     return x['fun'], x['x'][:-1]
 
@@ -138,11 +139,3 @@ def calculate_inverse_DFT(num_data_pts, num_coeffs, X_dft):
         result = np.nan_to_num(result, nan=0)
 
     return result
-
-
-"""def fit_PAA(data, num_coeffs):
-    y_values = [tup[1] for tup in data]
-    return PiecewiseAggregateApproximation(window_size=None, output_size=num_coeffs).fit_transform([y_values])
-    # X = [y_values, [1] * len(y_values)]
-    # return PiecewiseAggregateApproximation(window_size=None, output_size=num_coeffs).fit_transform(X=X)
-"""  # %%

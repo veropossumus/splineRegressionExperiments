@@ -39,9 +39,11 @@ def calculate_errors(data_tuples, knots, n):
 
     return errors
 
+
 def plot_time_series(time_series):
     plt.scatter([d[0] for d in time_series], [d[1] for d in time_series], marker='.')
     plt.show()
+
 
 def plot_data(data):
     for elem in data:
@@ -84,7 +86,22 @@ def plot_splines_with_without_outliers(data, data_lof, knots, degree, eps=0.0000
         plt.show()
 
 
-def add_fitted_curve_to_plot(axis, xs, fitted_curve: [float], max_dist: float, color: str, label: str = None):
+def add_fitted_curve_to_plot(axis, xs, fitted_curve: [float], max_dist: float, label: str = None, color: str = None):
+    if label is not None and color is None:
+        match label:
+            case 'PAA':
+                color = 'tab:gray'
+            case 'PLA':
+                color = 'tab:olive'
+            case 'L8':
+                color = 'tab:pink'
+            case 'L8 and L1':
+                color = 'tab:blue'
+            case 'LSQ':
+                color = 'tab:purple'
+            case 'DFT':
+                color = 'tab:green'
+
     axis.plot(xs, fitted_curve, color=color, linestyle='solid', label=label)
     if abs(max_dist) > 0:
         axis.plot(xs, [y + max_dist for y in fitted_curve], color=color, linestyle='dashed')

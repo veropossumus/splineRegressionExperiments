@@ -131,6 +131,13 @@ def normalize(time_series: [float]) -> [(float, float)]:
     return filtered_ts"""
 
 
+"""def impute_outliers(time_series: [(int, int)]):
+    ts_without_outliers = remove_outliers(time_series=time_series)
+    ts_with_replacements = replace_outliers(ts_without_outliers=ts_without_outliers,
+                                            original_xs=[tup[0] for tup in time_series])
+    return ts_with_replacements"""
+
+
 def remove_outliers(time_series: [(int, int)]):  # old version
     lof = LocalOutlierFactor()
     filtered_ts = []
@@ -187,7 +194,6 @@ def replace_outliers(ts_without_outliers: [(int, int)], original_xs: [int]):
                 next_number_idx += 1
 
             gap_len = next_number_idx - i
-            print("gap_len", gap_len)
 
             previous_y = ts_with_replacements[i - 1][1]
             next_y = ts_with_replacements[next_number_idx][1]
