@@ -187,23 +187,29 @@ def replace_outliers(ts_without_outliers: [(int, int)], original_xs: [int]):
                 next_number_idx += 1
 
             gap_len = next_number_idx - i
+            print("gap_len", gap_len)
+
             previous_y = ts_with_replacements[i - 1][1]
             next_y = ts_with_replacements[next_number_idx][1]
 
             assert type(previous_y) is not str
             assert type(next_y) is not str
 
-            # lin. interpolation for gaps in the middle (copy interpolated value for gaps >= 2)
-            new_y_value = (previous_y + next_y) / 2
-
-            for j in range(gap_len):
-                new_tuple = (ts_with_replacements[i + j][0], new_y_value)
-                ts_with_replacements[i + j] = new_tuple
-
             # lin. interpolation for gaps in the middle (incl. gaps >= 2!)
-            # TODO why is this worse than just copying?
-            """for j in range(gap_len):
-                new_tuple = (ts_with_replacements[i + j][0], ((previous_y + next_y) / gap_len) * (j+1))
-                ts_with_replacements[i + j] = new_tuple"""
+            if previous_y == next_y:
+                for j in range(gap_len):
+                    ts_with_replacements[i + j] = ts_with_replacements[i - 1]
+
+            else:
+                increment_size = (abs(previous_y - next_y)) / (gap_len + 1)
+                for j in range(gap_len):
+
+                    if previous_y < next_y:
+                        new_y_value = previous_y + increment_size * (j + 1)
+                    else:
+                        new_y_value = previous_y - increment_size * (j + 1)
+
+                    new_tuple = (ts_with_replacements[i + j][0], new_y_value)
+                    ts_with_replacements[i + j] = new_tuple
 
     return ts_with_replacements
