@@ -130,7 +130,6 @@ def normalize(time_series: [float]) -> [(float, float)]:
 
     return filtered_ts"""
 
-
 """def impute_outliers(time_series: [(int, int)]):
     ts_without_outliers = remove_outliers(time_series=time_series)
     ts_with_replacements = replace_outliers(ts_without_outliers=ts_without_outliers,
@@ -204,7 +203,8 @@ def replace_outliers(ts_without_outliers: [(int, int)], original_xs: [int]):
             # lin. interpolation for gaps in the middle (incl. gaps >= 2!)
             if previous_y == next_y:
                 for j in range(gap_len):
-                    ts_with_replacements[i + j] = ts_with_replacements[i - 1]
+                    new_tuple = (ts_with_replacements[i + j][0], ts_with_replacements[i - 1][1])
+                    ts_with_replacements[i + j] = new_tuple
 
             else:
                 increment_size = (abs(previous_y - next_y)) / (gap_len + 1)

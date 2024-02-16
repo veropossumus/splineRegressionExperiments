@@ -34,12 +34,6 @@ def fit_max_spline(data, knots, n) -> [float, [float]]:
         print("problem for knot count", len(knots), "and degree", n, "i.e. for num_coeff =", len(knots) - n - 1)
         print(x)
         return None, None
-        """print("now switching from HiGHS to simplex ...")
-        x = linprog(c, A_ub=A, b_ub=b, bounds=bounds, method='simplex', options={'disp': True})
-        if x['status'] != 0:
-            print("problem persists")
-            print(x)
-            return None, None"""
 
     return x['fun'], x['x'][:-1]
 
