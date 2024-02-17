@@ -80,11 +80,12 @@ def fit_max_l1_spline(data, knots, n, eps=0, t=None) -> [float, [float]]:
     if x2['status'] != 0:
         print("problem for knot count", len(knots), "and degree", n, "i.e. for num_coeff =", len(knots) - n - 1)
 
-        while eps < 1e-6:
-            print("increasing eps from", eps, "to", eps + 1e-7)
+        while eps < 1e-5:
+            print("increasing eps from", eps, "to", eps + 1e-8)
             eps += 1e-7
+            print("new eps:", eps)
             bounds = [(None, None) for _ in range(m)] + [(0, t + eps)] + [(None, None) for _ in range(k)]
-            x2 = linprog(c, A_ub=A_sparse, b_ub=b, bounds=bounds)
+            x2 = linprog(c, A_ub=A_sparse, b_ub=b, bounds=bounds, options={'disp': True})
             if x2['status'] == 0:
                 print("success for eps =", eps)
                 return x2['fun'], x2['x'][:m]
