@@ -5,6 +5,8 @@ import matplotlib.colors as mcolors
 from utils.data import replace_outliers
 from utils.spline import evaluate_spline
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 14})
+plt.rcParams.update({'axes.titlesize':14, 'axes.labelsize':14})
 
 from utils.fit import fit_max_spline, fit_max_l1_spline, calculate_inverse_DFT
 from utils.spline import calculate_max_dist
@@ -15,6 +17,8 @@ import scipy
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from utils.spline import evaluate_spline, calculate_max_dist
 from utils.fit import fit_max_spline, fit_max_l1_spline
+
+plot_path = "../plots/e1/"
 
 
 def calculate_errors(data_tuples, knots, n):
@@ -86,7 +90,7 @@ def plot_splines_with_without_outliers(data, data_lof, knots, degree, eps=0.0000
         plt.show()
 
 
-def add_fitted_curve_to_plot(axis, xs, fitted_curve: [float], max_dist: float, label: str = None, color: str = None):
+def add_fitted_curve_to_plot(axis, xs, fitted_curve: [float], max_dist: float, label: None, color: str = None):
     if label is not None and color is None:
         match label:
             case 'PAA':
@@ -94,22 +98,40 @@ def add_fitted_curve_to_plot(axis, xs, fitted_curve: [float], max_dist: float, l
             case 'PLA':
                 color = 'tab:olive'
             case 'L8':
-                color = 'tab:pink'
+                #color = 'tab:pink'
+                #color = 'xkcd:bordeaux'
+                color='red'
+                label = r'$L_\infty$'
             case 'L8 and L1':
+                label = r'$L_\infty^*$'
                 color = 'tab:blue'
+                #color = 'xkcd:pumpkin'
             case 'LSQ':
                 color = 'tab:purple'
             case 'DFT':
                 color = 'tab:green'
+            case 'PR':
+                color = 'tab:orange'
+            case 1:
+                color = 'tab:olive'
+            case 3:
+                color = 'tab:pink'
+
+    print("max_dist for method", label, ":", max_dist)
 
     axis.plot(xs, fitted_curve, color=color, linestyle='solid', label=label)
-    if abs(max_dist) > 0:
-        axis.plot(xs, [y + max_dist for y in fitted_curve], color=color, linestyle='dashed')
-        axis.plot(xs, [y - max_dist for y in fitted_curve], color=color, linestyle='dashed')
+    #if abs(max_dist) > 0:
+        #axis.plot(xs, [y + max_dist for y in fitted_curve], color=color, linestyle='dashed')
+        #axis.plot(xs, [y - max_dist for y in fitted_curve], color=color, linestyle='dashed')
 
 
 def plot_fitted_curve(xs, fitted_curve: [float], max_dist: float, label=None):
     color = "tab:blue"
+    match label:
+        case 'L8':
+            label = r'$L_\infty$'
+        case 'L8 and L1':
+            label = r'$L_\infty$'
     plt.plot(xs, fitted_curve, color=color, linestyle='solid', label=label)
     if abs(max_dist) > 0:
         plt.plot(xs, [y + max_dist for y in fitted_curve], color=color, linestyle='dashed')
@@ -210,60 +232,107 @@ def plot_splines(knots, degree, data, axis=None, eps=0.000001, plot_max=True, pl
     plt.show()
 
 
-def plot_errors_against_degrees(dataframe):
+def plot_errors_against_degrees(dataframe, savefig=False):
     metrics = ['max_dist', 'MSE', 'MAE']
+    metric_names = ['max. distance', 'MSE', 'MAE']
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+    #fig, axs = plt.subplots(1, 3, figsize=(12, 4))
+
+    df_list = []
 
     for i, metric in enumerate(metrics):
         avg_metric_by_degree = dataframe.groupby('degree')[metric].mean()
+        df_list.append(avg_metric_by_degree)
         axs[i].plot(avg_metric_by_degree.index, avg_metric_by_degree.values, marker='o', linestyle='-')
         axs[i].set_xlabel('Degree')
-        axs[i].set_ylabel('Average ' + metric)
-        axs[i].set_title('avg. ' + metric + ' for degrees 0 to ' + str(max(dataframe['degree'].unique())))
+        axs[i].set_ylabel('Mean ' + metric_names[i])
+        axs[i].set_title('Mean ' + metric_names[i])  # + ' for degrees 0 to ' + str(max(dataframe['degree'].unique())))
         axs[i].set_xticks(list(avg_metric_by_degree.index))
         axs[i].grid(True)
+        #axs[i].set_ylim(ymin=0)
 
-    plt.tight_layout()
+    plt.tight_layout(pad=3)
+
+    if savefig:
+        plt.savefig(plot_path + "plot_errors_against_degrees.pdf")
+
     plt.show()
 
+    df = pd.concat(df_list,axis=1)
+    print(df)
+    print(df.to_latex())
 
-def plot_errors_against_compression_rates_avg_degree(dataframe):
+    return
+
+
+def plot_errors_against_compression_rates_avg_degree(dataframe, savefig=False):
     metrics = ['max_dist', 'MSE', 'MAE']
+    metric_names = ['max. distance', 'MSE', 'MAE']
     compression_ratios = dataframe['compression_rate'].unique()
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+    #fig, axs = plt.subplots(1, 3, figsize=(12, 4))
+
+    df_list = []
 
     for i, metric in enumerate(metrics):
         avg_mse_by_compression_rate = dataframe.groupby('compression_rate')[metric].mean()
+        df_list.append(avg_mse_by_compression_rate)
         axs[i].plot(avg_mse_by_compression_rate.index, avg_mse_by_compression_rate.values, marker='o', linestyle='-')
-        axs[i].set_xlabel('compression_rate')
-        axs[i].set_ylabel('avg. ' + metric)
-        axs[i].set_title('avg. ' + metric + ' vs. compression_rate (over degrees 0 to ' + str(
-            max(dataframe['degree'].unique())) + ')')
+        axs[i].set_xlabel('Compression ratio')
+        axs[i].set_ylabel('Mean ' + metric_names[i])
+        axs[i].set_title('Mean ' + metric_names[
+            i] + ' vs. compression ratio')  # + ' vs. compression_rate (over degrees 0 to ' + str(max(dataframe['degree'].unique())) + ')')
         axs[i].set_xticks(compression_ratios)
         axs[i].grid(True)
+        #axs[i].set_ylim(ymin=0)
 
-    plt.tight_layout()
+    plt.tight_layout(pad=3)
+
+    if savefig:
+        plt.savefig(plot_path + "plot_errors_against_compression_rates_avg_degree.pdf")
+
     plt.show()
 
+    df = pd.concat(df_list,axis=1)
+    print(df)
+    print(df.to_latex())
 
-def plot_errors_against_compression_rates_for_each_degree(dataframe):
+    return
+
+
+
+def plot_errors_against_compression_rates_for_each_degree(dataframe, savefig=False):
     metrics = ['max_dist', 'MSE', 'MAE']
+    metric_names = ['max. distance', 'MSE', 'MAE']
     for degree, group in dataframe.groupby('degree'):
+
+        df_list = []
+
         fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+        #fig, axs = plt.subplots(1, 3, figsize=(12, 4))
         sub_df = dataframe[dataframe['degree'] == degree]
         for i, metric in enumerate(metrics):
             avg_metric_by_compression = sub_df.groupby('compression_rate')[metric].mean()
-            print()
+            df_list.append(avg_metric_by_compression)
             axs[i].plot(avg_metric_by_compression.index, avg_metric_by_compression.values, marker='o', linestyle='-')
-            axs[i].set_xlabel('compression_rate')
-            axs[i].set_ylabel('avg. ' + metric)
-            axs[i].set_title('avg. ' + metric + ' for degree ' + str(degree))
+            axs[i].set_xlabel('Compression ratio')
+            axs[i].set_ylabel('Mean ' + metric_names[i])
+            axs[i].set_title('Mean ' + metric_names[i] + ' for degree ' + str(degree))
             axs[i].set_xticks(list(avg_metric_by_compression.index))
             axs[i].grid(True)
-            plt.tight_layout()
+            #axs[i].set_ylim(ymin=0)
+            plt.tight_layout(pad=3)
+
+        if savefig:
+            plt.savefig(plot_path + "plot_errors_against_compression_rates_for_degree_" + str(degree) + ".pdf")
+
+        df = pd.concat(df_list,axis=1)
+        print("degree:",degree)
+        print(df)
+        print(df.to_latex())
 
     plt.show()
-
+    return
 
 def plot_inverse_DFT(dft_coeffs, time_series, num_coeffs):
     x_values = [tup[0] for tup in time_series]

@@ -7,8 +7,7 @@ def evaluate_b_spline(a, n, i, u, m):
 
     left_alpha = (u - a[i]) / (a[i + n] - a[i]) if i + n < len(a) and a[i + n] != a[i] else 0
     left_term = left_alpha * evaluate_b_spline(a, n - 1, i, u, m)
-    right_alpha = (u - a[i + 1]) / (a[i + n + 1] - a[i + 1]) if i + n + 1 < len(a) and a[i + n + 1] != a[
-        i + 1] else 1
+    right_alpha = (u - a[i + 1]) / (a[i + n + 1] - a[i + 1]) if i + n + 1 < len(a) and a[i + n + 1] != a[i + 1] else 1
     right_term = (1 - right_alpha) * evaluate_b_spline(a, n - 1, i + 1, u, m)
 
     return left_term + right_term
@@ -59,3 +58,13 @@ def generate_knot_vector_from_coeff_count(degree, num_coeffs):
     return knot_vector
 
 
+def generate_knot_vector_for_discontinuous_spline(degree, num_coeffs):
+    num_knots = num_coeffs + degree + 1
+    num_end_knots_each = degree + 1
+    assert num_knots >= 2 * num_end_knots_each
+    num_internal_knots = num_knots - 2 * num_end_knots_each
+    internal_knots = generate_internal_knots(num_internal_knots)
+    internal_knots_disc = [x for x in internal_knots for _ in range(degree + 1)]
+
+    knot_vector = num_end_knots_each * [0] + internal_knots_disc + num_end_knots_each * [1]
+    return knot_vector
