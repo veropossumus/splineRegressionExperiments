@@ -111,32 +111,6 @@ def normalize(time_series: [float]) -> [(float, float)]:
     return data_tuples
 
 
-"""def remove_outliers(time_series: [(int, int)]):
-    lof = LocalOutlierFactor()
-    filtered_ts = []
-
-    y_values = [[tup[1]] for tup in time_series]
-
-    outliers = lof.fit_predict(y_values)
-    assert (len(outliers) == len(time_series))
-
-    for i in range(len(outliers)):
-        if outliers[i] == 1:
-            filtered_ts.append(time_series[i])
-
-    print("remove_outliers version: only feature: y-values")
-    print("lof.n_features_in_", lof.n_features_in_)
-    print("lof.n_samples_fit_", lof.n_samples_fit_)
-
-    return filtered_ts"""
-
-"""def impute_outliers(time_series: [(int, int)]):
-    ts_without_outliers = remove_outliers(time_series=time_series)
-    ts_with_replacements = replace_outliers(ts_without_outliers=ts_without_outliers,
-                                            original_xs=[tup[0] for tup in time_series])
-    return ts_with_replacements"""
-
-
 def remove_outliers(time_series: [(int, int)]):  # old version
     lof = LocalOutlierFactor()
     filtered_ts = []
@@ -147,10 +121,6 @@ def remove_outliers(time_series: [(int, int)]):  # old version
     for i in range(len(outliers)):
         if outliers[i] == 1:
             filtered_ts.append(time_series[i])
-
-    """print("remove_outliers version: outliers = lof.fit_predict(time_series)")
-    print("lof.n_features_in_", lof.n_features_in_)
-    print("lof.n_samples_fit_",lof.n_samples_fit_)"""
 
     return filtered_ts
 
